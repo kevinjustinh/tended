@@ -8,6 +8,7 @@ final class PetViewModel {
     var wizardStep: Int = 0
     var wizardName: String = ""
     var wizardSpecies: PetSpecies = .dog
+    var wizardGender: PetGender = .unknown
     var wizardBreed: String = ""
     var wizardDOB: Date = Calendar.current.date(byAdding: .year, value: -2, to: Date()) ?? Date()
     var wizardWeight: String = ""
@@ -29,6 +30,7 @@ final class PetViewModel {
         let pet = Pet(
             name: wizardName.trimmingCharacters(in: .whitespaces),
             species: wizardSpecies,
+            gender: wizardGender,
             breed: wizardBreed,
             dateOfBirth: wizardDOB,
             weightKg: weightKg,
@@ -107,6 +109,7 @@ final class PetViewModel {
         wizardStep = 0
         wizardName = ""
         wizardSpecies = .dog
+        wizardGender = .unknown
         wizardBreed = ""
         wizardDOB = Calendar.current.date(byAdding: .year, value: -2, to: Date()) ?? Date()
         wizardWeight = ""

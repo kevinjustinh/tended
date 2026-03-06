@@ -1,6 +1,28 @@
 import Foundation
 import SwiftData
 
+enum PetGender: String, Codable, CaseIterable {
+    case male    = "male"
+    case female  = "female"
+    case unknown = "unknown"
+
+    var displayName: String {
+        switch self {
+        case .male:    return "Male"
+        case .female:  return "Female"
+        case .unknown: return "Unknown"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .male:    return "arrow.up.right.circle.fill"
+        case .female:  return "arrow.down.left.circle.fill"
+        case .unknown: return "minus.circle.fill"
+        }
+    }
+}
+
 enum PetSpecies: String, Codable, CaseIterable {
     case dog   = "dog"
     case cat   = "cat"
@@ -28,6 +50,7 @@ final class Pet {
     var id: UUID
     var name: String
     var speciesRaw: String
+    var genderRaw: String = PetGender.unknown.rawValue
     var breed: String
     var dateOfBirth: Date?
     var weightKg: Double?
@@ -42,6 +65,7 @@ final class Pet {
         id: UUID = UUID(),
         name: String,
         species: PetSpecies = .dog,
+        gender: PetGender = .unknown,
         breed: String = "",
         dateOfBirth: Date? = nil,
         weightKg: Double? = nil,
@@ -52,6 +76,7 @@ final class Pet {
         self.id = id
         self.name = name
         self.speciesRaw = species.rawValue
+        self.genderRaw = gender.rawValue
         self.breed = breed
         self.dateOfBirth = dateOfBirth
         self.weightKg = weightKg
@@ -64,6 +89,11 @@ final class Pet {
     var species: PetSpecies {
         get { PetSpecies(rawValue: speciesRaw) ?? .dog }
         set { speciesRaw = newValue.rawValue }
+    }
+
+    var gender: PetGender {
+        get { PetGender(rawValue: genderRaw) ?? .unknown }
+        set { genderRaw = newValue.rawValue }
     }
 
     var age: String {

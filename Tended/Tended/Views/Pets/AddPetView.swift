@@ -136,6 +136,26 @@ private struct Step1View: View {
                 }
                 .padding(.horizontal, Spacing.lg)
 
+                VStack(alignment: .leading, spacing: Spacing.sm) {
+                    Text("Gender")
+                        .font(.cardTitle())
+                        .foregroundStyle(Color.textPrimary)
+                    HStack(spacing: Spacing.md) {
+                        ForEach(PetGender.allCases, id: \.self) { g in
+                            Button { petVM.wizardGender = g } label: {
+                                Text(g.displayName)
+                                    .font(.cardTitle())
+                                    .foregroundStyle(petVM.wizardGender == g ? .white : Color.textPrimary)
+                                    .padding(.horizontal, Spacing.lg)
+                                    .padding(.vertical, Spacing.md)
+                                    .background(petVM.wizardGender == g ? Color.sageGreen : Color.softLinen,
+                                                in: RoundedRectangle(cornerRadius: CornerRadius.medium))
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, Spacing.lg)
+
                 Button {
                     withAnimation { petVM.wizardStep = 1 }
                 } label: {
@@ -185,11 +205,14 @@ private struct Step2View: View {
                 VStack(alignment: .leading, spacing: Spacing.sm) {
                     Text("Date of Birth")
                         .font(.cardTitle())
-                    DatePicker("", selection: $petVM.wizardDOB, in: ...Date(), displayedComponents: .date)
-                        .datePickerStyle(.compact)
-                        .labelsHidden()
-                        .padding(Spacing.sm)
-                        .background(Color.softLinen, in: RoundedRectangle(cornerRadius: CornerRadius.medium))
+                    HStack {
+                        DatePicker("", selection: $petVM.wizardDOB, in: ...Date(), displayedComponents: .date)
+                            .datePickerStyle(.compact)
+                            .labelsHidden()
+                        Spacer()
+                    }
+                    .padding(Spacing.sm)
+                    .background(Color.softLinen, in: RoundedRectangle(cornerRadius: CornerRadius.medium))
                 }
                 .padding(.horizontal, Spacing.lg)
 

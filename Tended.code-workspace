@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "Tended",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/.DS_Store": true,
+			"**/xcuserdata": true,
+			"**/*.xcuserstate": true,
+			"**/DerivedData": true
+		}
+	}
+}

@@ -22,8 +22,8 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
-                withAnimation(.easeOut(duration: 0.5)) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                withAnimation(.easeOut(duration: 0.6)) {
                     showSplash = false
                 }
             }
@@ -43,14 +43,17 @@ private struct SplashScreen: View {
             Color.creamWhite.ignoresSafeArea()
 
             VStack(spacing: Spacing.lg) {
-                Image("AppIcon")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 100, height: 100)
-                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .shadow(color: Color.deepForest.opacity(0.15), radius: 12, x: 0, y: 6)
-                    .scaleEffect(logoScale)
-                    .opacity(logoOpacity)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 26, style: .continuous)
+                        .fill(Color.sageGreen)
+                        .frame(width: 100, height: 100)
+                        .shadow(color: Color.deepForest.opacity(0.2), radius: 12, x: 0, y: 6)
+                    Image(systemName: "pawprint.fill")
+                        .font(.system(size: 44, weight: .medium))
+                        .foregroundStyle(.white)
+                }
+                .scaleEffect(logoScale)
+                .opacity(logoOpacity)
 
                 VStack(spacing: 4) {
                     Text("Tended")

@@ -192,7 +192,7 @@ struct PetProfileView: View {
         HStack {
             StatCell(label: "Weight", value: pet.weightDisplay)
             Divider().frame(height: 36)
-            StatCell(label: "Species", value: pet.species.displayName)
+            StatCell(label: "Gender", value: pet.gender == .unknown ? "—" : pet.gender.displayName)
             Divider().frame(height: 36)
             StatCell(label: "Tasks", value: "\(pet.tasks.filter(\.isRecurring).count) daily")
         }
@@ -282,6 +282,17 @@ struct PetProfileView: View {
                         .onChange(of: pet.notes) {
                             try? context.save()
                         }
+                        .toolbar {
+                            ToolbarItemGroup(placement: .keyboard) {
+                                Spacer()
+                                Button("Done") {
+                                    editingNotes = false
+                                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                }
+                                .fontWeight(.semibold)
+                                .foregroundStyle(Color.sageGreen)
+                            }
+                        }
                 } else {
                     Text(pet.notes.isEmpty ? "Tap to add notes…" : pet.notes)
                         .font(.bodyText())
@@ -365,6 +376,7 @@ struct EditPetSheet: View {
     @State private var dob: Date = Date()
     @State private var weight: String = ""
     @State private var species: PetSpecies = .dog
+    @State private var gender: PetGender = .unknown
     @State private var photoItem: PhotosPickerItem?
     @State private var photoData: Data?
 
@@ -423,6 +435,26 @@ struct EditPetSheet: View {
                                                     in: RoundedRectangle(cornerRadius: CornerRadius.medium))
                                 }
                             }
+                            Spacer()
+                        }
+                    }
+                    .padding(.horizontal, Spacing.lg)
+
+                    VStack(alignment: .leading, spacing: Spacing.sm) {
+                        Text("Gender").font(.cardTitle()).foregroundStyle(Color.textPrimary)
+                        HStack(spacing: Spacing.md) {
+                            ForEach(PetGender.allCases, id: \.self) { g in
+                                Button { gender = g } label: {
+                                    Text(g.displayName)
+                                        .font(.cardTitle())
+                                        .foregroundStyle(gender == g ? .white : Color.textPrimary)
+                                        .padding(.horizontal, Spacing.lg)
+                                        .padding(.vertical, Spacing.md)
+                                        .background(gender == g ? Color.sageGreen : Color.softLinen,
+                                                    in: RoundedRectangle(cornerRadius: CornerRadius.medium))
+                                }
+                            }
+                            Spacer()
                         }
                     }
                     .padding(.horizontal, Spacing.lg)
@@ -438,11 +470,14 @@ struct EditPetSheet: View {
 
                     VStack(alignment: .leading, spacing: Spacing.sm) {
                         Text("Date of Birth").font(.cardTitle()).foregroundStyle(Color.textPrimary)
-                        DatePicker("", selection: $dob, in: ...Date(), displayedComponents: .date)
-                            .datePickerStyle(.compact)
-                            .labelsHidden()
-                            .padding(Spacing.sm)
-                            .background(Color.softLinen, in: RoundedRectangle(cornerRadius: CornerRadius.medium))
+                        HStack {
+                            DatePicker("", selection: $dob, in: ...Date(), displayedComponents: .date)
+                                .datePickerStyle(.compact)
+                                .labelsHidden()
+                            Spacer()
+                        }
+                        .padding(Spacing.sm)
+                        .background(Color.softLinen, in: RoundedRectangle(cornerRadius: CornerRadius.medium))
                     }
                     .padding(.horizontal, Spacing.lg)
 
@@ -470,6 +505,7 @@ struct EditPetSheet: View {
                         pet.name = name.trimmingCharacters(in: .whitespaces)
                         pet.breed = breed
                         pet.species = species
+                        pet.gender = gender
                         pet.dateOfBirth = dob
                         pet.weightKg = Double(weight).map {
                             Measurement(value: $0, unit: Pet.preferredWeightUnit).converted(to: .kilograms).value
@@ -487,6 +523,7 @@ struct EditPetSheet: View {
                 name    = pet.name
                 breed   = pet.breed
                 species = pet.species
+                gender  = pet.gender
                 dob     = pet.dateOfBirth ?? Calendar.current.date(byAdding: .year, value: -2, to: Date()) ?? Date()
                 weight  = pet.weightKg.map {
                     let converted = Measurement(value: $0, unit: UnitMass.kilograms).converted(to: Pet.preferredWeightUnit)
