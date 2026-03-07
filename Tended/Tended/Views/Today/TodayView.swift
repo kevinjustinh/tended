@@ -88,6 +88,7 @@ struct TodayView: View {
                                     tasks: upcomingChronological,
                                     onToggle: { task in
                                         viewModel.toggleCompletion(task, in: context, allTasks: allTasks)
+                                        viewModel.didFinishToggle(displayedTasks: displayedTasks)
                                     },
                                     onDelete: { task in
                                         viewModel.delete(task, in: context)
@@ -106,6 +107,7 @@ struct TodayView: View {
                                     tasks: tasks,
                                     onToggle: { task in
                                         viewModel.toggleCompletion(task, in: context, allTasks: allTasks)
+                                        viewModel.didFinishToggle(displayedTasks: displayedTasks)
                                     },
                                     onDelete: { task in
                                         viewModel.delete(task, in: context)
@@ -121,6 +123,35 @@ struct TodayView: View {
                 }
                 .refreshable {
                     viewModel.generateTodayOccurrences(from: allTasks, in: context)
+                }
+
+                // Undo banner (sits above FAB)
+                VStack(spacing: 0) {
+                    Spacer()
+                    if viewModel.showUndoBanner, let task = viewModel.lastCompletedTask {
+                        HStack(spacing: Spacing.md) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(Color.successMoss)
+                            Text("\"\(task.title)\" marked done")
+                                .font(.bodyText())
+                                .foregroundStyle(Color.textPrimary)
+                                .lineLimit(1)
+                            Spacer()
+                            Button("Undo") {
+                                viewModel.undoCompletion(in: context)
+                            }
+                            .font(.cardTitle(size: 14))
+                            .foregroundStyle(Color.sageGreen)
+                        }
+                        .padding(.horizontal, Spacing.lg)
+                        .padding(.vertical, Spacing.md)
+                        .background(Color.softLinen)
+                        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.large))
+                        .shadow(color: Color.textPrimary.opacity(0.12), radius: 8, x: 0, y: 4)
+                        .padding(.horizontal, Spacing.lg)
+                        .padding(.bottom, Spacing.xl + 56 + Spacing.sm)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
 
                 // FAB
@@ -147,9 +178,14 @@ struct TodayView: View {
         }
         .onAppear {
             viewModel.generateTodayOccurrences(from: allTasks, in: context)
+            viewModel.checkBirthdays(pets: pets)
         }
         .onChange(of: selectedDate) {
             filter = .all
+            viewModel.allDoneMessage = nil
+        }
+        .onChange(of: allTasks) {
+            viewModel.checkAllDone(tasks: displayedTasks)
         }
         .onReceive(NotificationCenter.default.publisher(for: .taskMarkedDoneFromNotification)) { note in
             guard let uuid = note.object as? UUID,
@@ -195,6 +231,48 @@ struct TodayView: View {
     // MARK: - Header
 
     private var headerSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            mainHeader
+
+            // Birthday banner
+            if isToday && !viewModel.birthdayPets.isEmpty {
+                let names = viewModel.birthdayPets.map(\.name).joined(separator: " & ")
+                HStack(spacing: Spacing.sm) {
+                    Text("🎂")
+                        .font(.title3)
+                    Text("Happy birthday, \(names)!")
+                        .font(.cardTitle(size: 14))
+                        .foregroundStyle(Color.deepForest)
+                    Spacer()
+                }
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
+                .background(Color.warmTan.opacity(0.25), in: RoundedRectangle(cornerRadius: CornerRadius.medium))
+                .padding(.horizontal, Spacing.lg)
+                .transition(.scale.combined(with: .opacity))
+            }
+
+            // All-done message (All filter only)
+            if filter == .all, let message = viewModel.allDoneMessage {
+                HStack(spacing: Spacing.sm) {
+                    Image(systemName: "star.fill")
+                        .font(.caption())
+                        .foregroundStyle(Color.warmTan)
+                    Text(message)
+                        .font(.cardTitle(size: 14))
+                        .foregroundStyle(Color.deepForest)
+                    Spacer()
+                }
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
+                .background(Color.successMoss.opacity(0.15), in: RoundedRectangle(cornerRadius: CornerRadius.medium))
+                .padding(.horizontal, Spacing.lg)
+                .transition(.scale.combined(with: .opacity))
+            }
+        }
+    }
+
+    private var mainHeader: some View {
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(isToday ? viewModel.greeting + "!" : dateLabel)

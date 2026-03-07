@@ -200,7 +200,7 @@ struct CalendarView: View {
                                     Text(task.title)
                                         .font(.cardTitle(size: 14))
                                         .foregroundStyle(task.isCompleted ? Color.textSecondary : Color.textPrimary)
-                                        .strikethrough(task.isCompleted)
+                                        .strikethrough(task.isCompleted && selectedDate <= Calendar.current.startOfDay(for: Date()))
                                     if let petName = task.pet?.name {
                                         Text(petName)
                                             .font(.caption())

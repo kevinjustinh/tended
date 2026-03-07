@@ -7,8 +7,13 @@ final class TodayViewModel {
     var selectedPetID: UUID?
     var showConfetti: Bool = false
     var showAddTask: Bool = false
+    var showUndoBanner: Bool = false
+    var lastCompletedTask: TendedTask?
+    var birthdayPets: [Pet] = []
+    var allDoneMessage: String? = nil
 
     private var cancellables = Set<AnyCancellable>()
+    private var undoWorkItem: DispatchWorkItem?
 
     init() {
         // Observe notification-action completions from the lock screen
@@ -93,6 +98,24 @@ final class TodayViewModel {
         NotificationService.shared.cancelReminder(for: task)
         try? context.save()
         triggerConfetti(duration: 1.5)
+
+        lastCompletedTask = task
+        withAnimation(.springCard) { showUndoBanner = true }
+        undoWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
+            withAnimation(.springCard) { self?.showUndoBanner = false }
+            self?.lastCompletedTask = nil
+        }
+        undoWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: workItem)
+    }
+
+    func undoCompletion(in context: ModelContext) {
+        guard let task = lastCompletedTask else { return }
+        undoWorkItem?.cancel()
+        uncomplete(task, in: context)
+        withAnimation(.springCard) { showUndoBanner = false }
+        lastCompletedTask = nil
     }
 
     private func triggerConfetti(duration: Double) {
@@ -101,6 +124,44 @@ final class TodayViewModel {
             DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
                 withAnimation { self.showConfetti = false }
             }
+        }
+    }
+
+    // MARK: - Birthdays
+
+    func checkBirthdays(pets: [Pet]) {
+        let cal = Calendar.current
+        let now = Date()
+        let todayMonth = cal.component(.month, from: now)
+        let todayDay   = cal.component(.day, from: now)
+        birthdayPets = pets.filter { pet in
+            guard let dob = pet.dateOfBirth else { return false }
+            return cal.component(.month, from: dob) == todayMonth &&
+                   cal.component(.day, from: dob) == todayDay
+        }
+        if !birthdayPets.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                self.triggerConfetti(duration: 3.5)
+            }
+        }
+    }
+
+    // MARK: - All-done message
+
+    func checkAllDone(tasks: [TendedTask]) {
+        guard !tasks.isEmpty, tasks.allSatisfy(\.isCompleted) else {
+            allDoneMessage = nil
+            return
+        }
+        let messages = [
+            "All done for today!",
+            "Your pets are well tended.",
+            "Perfect day for your pets!",
+            "You're on a roll!",
+            "Nothing left — great job!"
+        ]
+        withAnimation(.springCard) {
+            allDoneMessage = messages.randomElement()
         }
     }
 
@@ -116,9 +177,14 @@ final class TodayViewModel {
     func toggleCompletion(_ task: TendedTask, in context: ModelContext, allTasks: [TendedTask]) {
         if task.isCompleted {
             uncomplete(task, in: context)
+            withAnimation(.springCard) { allDoneMessage = nil }
         } else {
             complete(task, in: context)
         }
+    }
+
+    func didFinishToggle(displayedTasks: [TendedTask]) {
+        checkAllDone(tasks: displayedTasks)
     }
 
     // MARK: - Recurrence generation

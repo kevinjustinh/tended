@@ -56,10 +56,16 @@ final class Pet {
     var weightKg: Double?
     @Attribute(.externalStorage) var photoData: Data?
     var notes: String
+    var vetClinicName: String = ""
+    var vetAddress: String    = ""
+    var vetPhone: String      = ""
     var createdAt: Date
 
     @Relationship(deleteRule: .cascade, inverse: \TendedTask.pet)
     var tasks: [TendedTask]
+
+    @Relationship(deleteRule: .cascade, inverse: \PackingItem.pet)
+    var packingItems: [PackingItem]
 
     init(
         id: UUID = UUID(),
@@ -84,6 +90,7 @@ final class Pet {
         self.notes = notes
         self.createdAt = createdAt
         self.tasks = []
+        self.packingItems = []
     }
 
     var species: PetSpecies {

@@ -61,6 +61,16 @@ struct PetListView: View {
             }
             .navigationTitle("Pets")
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    NavigationLink {
+                        TripPackingView()
+                    } label: {
+                        Image(systemName: "suitcase.fill")
+                            .foregroundStyle(Color.sageGreen)
+                    }
+                }
+            }
         }
         .sheet(isPresented: $petVM.showAddPet) {
             AddPetView(petVM: petVM)

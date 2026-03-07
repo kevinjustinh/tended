@@ -14,6 +14,8 @@ struct PetProfileView: View {
     @State private var editedName = ""
     @State private var isRoutineExpanded = true
     @State private var isHealthExpanded = true
+    @State private var isVetExpanded = true
+    @State private var editingVet = false
     @State private var isNotesExpanded = true
     @State private var editingNotes = false
     @State private var showDeleteConfirm = false
@@ -71,6 +73,8 @@ struct PetProfileView: View {
                 // Sections
                 VStack(spacing: Spacing.lg) {
                     routineSection
+                    packingListLink
+                    vetSection
                     notesSection
                 }
                 .padding(.horizontal, Spacing.lg)
@@ -266,6 +270,106 @@ struct PetProfileView: View {
         .cardStyle()
     }
 
+    // MARK: - Packing list link
+
+    private var packingListLink: some View {
+        NavigationLink {
+            PackingListView(pet: pet)
+        } label: {
+            HStack(spacing: Spacing.md) {
+                Image(systemName: "suitcase.fill")
+                    .font(.system(size: 20))
+                    .foregroundStyle(Color.warmTan)
+                    .frame(width: 36, height: 36)
+                    .background(Color.warmTan.opacity(0.15), in: RoundedRectangle(cornerRadius: CornerRadius.small))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Packing List")
+                        .font(.cardTitle())
+                        .foregroundStyle(Color.textPrimary)
+                    let count = pet.packingItems.count
+                    Text(count == 0 ? "No items yet" : "\(count) item\(count == 1 ? "" : "s")")
+                        .font(.caption())
+                        .foregroundStyle(Color.textSecondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.textSecondary)
+            }
+            .padding(Spacing.lg)
+            .cardStyle()
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Vet section
+
+    private var vetSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            SectionHeader(title: "Veterinarian", isExpanded: $isVetExpanded)
+
+            if isVetExpanded {
+                if editingVet {
+                    VStack(spacing: Spacing.md) {
+                        VetField(label: "Clinic", placeholder: "e.g. Happy Paws Vet", text: $pet.vetClinicName)
+                        VetField(label: "Address", placeholder: "e.g. 123 Main St", text: $pet.vetAddress)
+                        VetField(label: "Phone", placeholder: "e.g. (555) 123-4567", text: $pet.vetPhone,
+                                 keyboardType: .phonePad)
+                    }
+                    .padding(Spacing.lg)
+                    .onChange(of: pet.vetClinicName) { try? context.save() }
+                    .onChange(of: pet.vetAddress)    { try? context.save() }
+                    .onChange(of: pet.vetPhone)      { try? context.save() }
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("Done") {
+                                editingVet = false
+                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                            }
+                            .fontWeight(.semibold)
+                            .foregroundStyle(Color.sageGreen)
+                        }
+                    }
+                } else {
+                    let hasInfo = !pet.vetClinicName.isEmpty || !pet.vetAddress.isEmpty || !pet.vetPhone.isEmpty
+                    Group {
+                        if hasInfo {
+                            VStack(spacing: 0) {
+                                if !pet.vetClinicName.isEmpty {
+                                    VetInfoRow(label: "Clinic", value: pet.vetClinicName)
+                                    if !pet.vetAddress.isEmpty || !pet.vetPhone.isEmpty {
+                                        Divider().padding(.leading, Spacing.lg)
+                                    }
+                                }
+                                if !pet.vetAddress.isEmpty {
+                                    VetInfoRow(label: "Address", value: pet.vetAddress)
+                                    if !pet.vetPhone.isEmpty {
+                                        Divider().padding(.leading, Spacing.lg)
+                                    }
+                                }
+                                if !pet.vetPhone.isEmpty {
+                                    VetInfoRow(label: "Phone", value: pet.vetPhone)
+                                }
+                            }
+                        } else {
+                            Text("Tap to add vet info…")
+                                .font(.bodyText())
+                                .foregroundStyle(Color.textSecondary)
+                                .padding(Spacing.lg)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                    .onTapGesture { editingVet = true }
+                }
+            }
+        }
+        .cardStyle()
+    }
+
     // MARK: - Notes section
 
     private var notesSection: some View {
@@ -364,6 +468,46 @@ private struct SectionHeader: View {
     }
 }
 
+private struct VetInfoRow: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.bodyText())
+                .foregroundStyle(Color.textSecondary)
+                .frame(width: 64, alignment: .leading)
+            Text(value)
+                .font(.cardTitle(size: 15))
+                .foregroundStyle(Color.textPrimary)
+            Spacer()
+        }
+        .padding(.horizontal, Spacing.lg)
+        .padding(.vertical, Spacing.md)
+    }
+}
+
+private struct VetField: View {
+    let label: String
+    let placeholder: String
+    @Binding var text: String
+    var keyboardType: UIKeyboardType = .default
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption())
+                .foregroundStyle(Color.textSecondary)
+            TextField(placeholder, text: $text)
+                .font(.cardTitle(size: 15))
+                .keyboardType(keyboardType)
+                .padding(Spacing.md)
+                .background(Color.warmSand.opacity(0.4), in: RoundedRectangle(cornerRadius: CornerRadius.medium))
+        }
+    }
+}
+
 // MARK: - Edit Pet Sheet
 
 struct EditPetSheet: View {
@@ -379,6 +523,9 @@ struct EditPetSheet: View {
     @State private var gender: PetGender = .unknown
     @State private var photoItem: PhotosPickerItem?
     @State private var photoData: Data?
+    @State private var vetClinicName: String = ""
+    @State private var vetAddress: String    = ""
+    @State private var vetPhone: String      = ""
 
     var body: some View {
         NavigationStack {
@@ -490,6 +637,34 @@ struct EditPetSheet: View {
                             .background(Color.softLinen, in: RoundedRectangle(cornerRadius: CornerRadius.medium))
                     }
                     .padding(.horizontal, Spacing.lg)
+
+                    VStack(alignment: .leading, spacing: Spacing.sm) {
+                        Text("Vet Clinic").font(.cardTitle()).foregroundStyle(Color.textPrimary)
+                        TextField("e.g. Happy Paws Vet", text: $vetClinicName)
+                            .textFieldStyle(.plain)
+                            .padding(Spacing.md)
+                            .background(Color.softLinen, in: RoundedRectangle(cornerRadius: CornerRadius.medium))
+                    }
+                    .padding(.horizontal, Spacing.lg)
+
+                    VStack(alignment: .leading, spacing: Spacing.sm) {
+                        Text("Vet Address").font(.cardTitle()).foregroundStyle(Color.textPrimary)
+                        TextField("e.g. 123 Main St", text: $vetAddress)
+                            .textFieldStyle(.plain)
+                            .padding(Spacing.md)
+                            .background(Color.softLinen, in: RoundedRectangle(cornerRadius: CornerRadius.medium))
+                    }
+                    .padding(.horizontal, Spacing.lg)
+
+                    VStack(alignment: .leading, spacing: Spacing.sm) {
+                        Text("Vet Phone").font(.cardTitle()).foregroundStyle(Color.textPrimary)
+                        TextField("e.g. (555) 123-4567", text: $vetPhone)
+                            .textFieldStyle(.plain)
+                            .keyboardType(.phonePad)
+                            .padding(Spacing.md)
+                            .background(Color.softLinen, in: RoundedRectangle(cornerRadius: CornerRadius.medium))
+                    }
+                    .padding(.horizontal, Spacing.lg)
                 }
                 .padding(.vertical, Spacing.lg)
             }
@@ -511,6 +686,9 @@ struct EditPetSheet: View {
                             Measurement(value: $0, unit: Pet.preferredWeightUnit).converted(to: .kilograms).value
                         }
                         if let data = photoData { pet.photoData = data }
+                        pet.vetClinicName = vetClinicName
+                        pet.vetAddress    = vetAddress
+                        pet.vetPhone      = vetPhone
                         try? context.save()
                         dismiss()
                     }
@@ -529,6 +707,9 @@ struct EditPetSheet: View {
                     let converted = Measurement(value: $0, unit: UnitMass.kilograms).converted(to: Pet.preferredWeightUnit)
                     return String(format: "%.1f", converted.value)
                 } ?? ""
+                vetClinicName = pet.vetClinicName
+                vetAddress    = pet.vetAddress
+                vetPhone      = pet.vetPhone
             }
         }
         .presentationDetents([.large])
