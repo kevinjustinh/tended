@@ -22,7 +22,7 @@ struct TaskListView: View {
                     filterBar
 
                     if grouped.isEmpty {
-                        EmptyStateView.noTasks { taskVM.openAddSheet() }
+                        EmptyStateView.noTasks { taskVM.openAddSheet(category: taskVM.filterCategory ?? .feeding) }
                     } else {
                         List {
                             ForEach(grouped, id: \.0) { category, tasks in

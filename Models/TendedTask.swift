@@ -92,11 +92,15 @@ final class TendedTask {
 
     var formattedDueTime: String {
         guard let t = dueTime else { return "" }
-        let fmt = DateFormatter()
-        fmt.timeStyle = .short
-        fmt.dateStyle = .none
-        return fmt.string(from: t)
+        return TendedTask.timeFormatter.string(from: t)
     }
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        f.dateStyle = .none
+        return f
+    }()
 
     var isOverdue: Bool {
         guard !isCompleted, let t = dueTime else { return false }

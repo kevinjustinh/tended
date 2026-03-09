@@ -31,6 +31,23 @@ struct TaskDetailView: View {
                     }
                     .padding(.horizontal, Spacing.lg)
 
+                    // Notes
+                    if !task.notes.isEmpty {
+                        VStack(alignment: .leading, spacing: Spacing.sm) {
+                            Text("Notes")
+                                .font(.cardTitle())
+                                .foregroundStyle(Color.textSecondary)
+                                .padding(.horizontal, Spacing.lg)
+                            Text(task.notes)
+                                .font(.bodyText())
+                                .foregroundStyle(Color.textPrimary)
+                                .padding(Spacing.lg)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .cardStyle()
+                                .padding(.horizontal, Spacing.lg)
+                        }
+                    }
+
                     // Details card
                     VStack(spacing: 0) {
                         DetailRow(label: "Category", value: task.category.displayName)
@@ -63,23 +80,6 @@ struct TaskDetailView: View {
                     }
                     .cardStyle()
                     .padding(.horizontal, Spacing.lg)
-
-                    // Notes
-                    if !task.notes.isEmpty {
-                        VStack(alignment: .leading, spacing: Spacing.sm) {
-                            Text("Notes")
-                                .font(.cardTitle())
-                                .foregroundStyle(Color.textSecondary)
-                                .padding(.horizontal, Spacing.lg)
-                            Text(task.notes)
-                                .font(.bodyText())
-                                .foregroundStyle(Color.textPrimary)
-                                .padding(Spacing.lg)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .cardStyle()
-                                .padding(.horizontal, Spacing.lg)
-                        }
-                    }
 
                     // Delete button
                     Button(role: .destructive) {

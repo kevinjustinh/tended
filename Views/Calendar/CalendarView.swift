@@ -16,9 +16,15 @@ struct CalendarView: View {
         }.sorted { ($0.dueTimeSeconds ?? 0) < ($1.dueTimeSeconds ?? 0) }
     }
 
-    private var datesWithTasks: Set<String> {
-        Set(allTasks.compactMap { $0.dueDate }.map { dateKey($0) })
-    }
+    // Cached so tapping a day cell doesn't re-scan every task on each render
+    @State private var datesWithTasks: Set<String> = []
+
+    private static let dayKeyFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyyMMdd"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        return f
+    }()
 
     var body: some View {
         NavigationStack {
@@ -47,6 +53,8 @@ struct CalendarView: View {
         .sheet(isPresented: $taskVM.showSheet) {
             AddTaskSheet(taskVM: taskVM, pets: pets)
         }
+        .onAppear { rebuildDatesWithTasks() }
+        .onChange(of: allTasks) { rebuildDatesWithTasks() }
     }
 
     // MARK: - Month navigation strip
@@ -170,7 +178,7 @@ struct CalendarView: View {
                                     Text(task.title)
                                         .font(.cardTitle(size: 14))
                                         .foregroundStyle(task.isCompleted ? Color.textSecondary : Color.textPrimary)
-                                        .strikethrough(task.isCompleted)
+                                        .strikethrough(task.isCompleted && selectedDate <= Calendar.current.startOfDay(for: Date()))
                                     if let petName = task.pet?.name {
                                         Text(petName)
                                             .font(.caption())
@@ -214,8 +222,11 @@ struct CalendarView: View {
     }
 
     private func dateKey(_ date: Date) -> String {
-        let comps = Calendar.current.dateComponents([.year, .month, .day], from: date)
-        return "\(comps.year ?? 0)-\(comps.month ?? 0)-\(comps.day ?? 0)"
+        CalendarView.dayKeyFormatter.string(from: date)
+    }
+
+    private func rebuildDatesWithTasks() {
+        datesWithTasks = Set(allTasks.compactMap { $0.dueDate }.map { dateKey($0) })
     }
 
     /// Returns a 2D array of optional Dates representing the calendar grid for the given month.

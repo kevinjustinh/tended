@@ -34,10 +34,16 @@ struct PetProfileView: View {
                     .padding(.horizontal, Spacing.lg)
                     .padding(.vertical, Spacing.lg)
 
-                // Sections
+                // Sections — notes pinned first when content exists
                 VStack(spacing: Spacing.lg) {
+                    if !pet.notes.isEmpty {
+                        notesSection
+                    }
                     routineSection
-                    notesSection
+                    packingListLink
+                    if pet.notes.isEmpty {
+                        notesSection
+                    }
                 }
                 .padding(.horizontal, Spacing.lg)
                 .padding(.bottom, Spacing.xxl)
@@ -173,6 +179,41 @@ struct PetProfileView: View {
             }
         }
         .cardStyle()
+    }
+
+    // MARK: - Packing list link
+
+    private var packingListLink: some View {
+        NavigationLink {
+            PackingListView(pet: pet)
+        } label: {
+            HStack(spacing: Spacing.md) {
+                Image(systemName: "suitcase.fill")
+                    .font(.system(size: 20))
+                    .foregroundStyle(Color.warmTan)
+                    .frame(width: 36, height: 36)
+                    .background(Color.warmTan.opacity(0.15), in: RoundedRectangle(cornerRadius: CornerRadius.small))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Packing List")
+                        .font(.cardTitle())
+                        .foregroundStyle(Color.textPrimary)
+                    let count = pet.packingItems.count
+                    Text(count == 0 ? "No items yet" : "\(count) item\(count == 1 ? "" : "s")")
+                        .font(.caption())
+                        .foregroundStyle(Color.textSecondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.textSecondary)
+            }
+            .padding(Spacing.lg)
+            .cardStyle()
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Notes section

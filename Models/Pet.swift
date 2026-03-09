@@ -35,6 +35,9 @@ final class Pet {
     @Relationship(deleteRule: .cascade, inverse: \TendedTask.pet)
     var tasks: [TendedTask]
 
+    @Relationship(deleteRule: .cascade, inverse: \PackingItem.pet)
+    var packingItems: [PackingItem]
+
     init(
         id: UUID = UUID(),
         name: String,
@@ -56,6 +59,7 @@ final class Pet {
         self.notes = notes
         self.createdAt = createdAt
         self.tasks = []
+        self.packingItems = []
     }
 
     var species: PetSpecies {

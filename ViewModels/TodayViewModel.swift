@@ -7,8 +7,13 @@ final class TodayViewModel {
     var selectedPetID: UUID?
     var showConfetti: Bool = false
     var showAddTask: Bool = false
+    var showUndoBanner: Bool = false
+    var lastCompletedTask: TendedTask?
+    var birthdayPets: [Pet] = []
 
     private var cancellables = Set<AnyCancellable>()
+    private var undoWorkItem: DispatchWorkItem?
+    private var lastGeneratedDay: Date?
 
     init() {
         // Observe notification-action completions from the lock screen
@@ -64,7 +69,26 @@ final class TodayViewModel {
         }
         HapticStyle.taskComplete.trigger()
         NotificationService.shared.cancelReminder(for: task)
-        try? context.save()
+        // Defer the disk write so the animation frame renders first
+        DispatchQueue.main.async { try? context.save() }
+
+        lastCompletedTask = task
+        withAnimation(.springCard) { showUndoBanner = true }
+        undoWorkItem?.cancel()
+        let workItem = DispatchWorkItem { [weak self] in
+            withAnimation(.springCard) { self?.showUndoBanner = false }
+            self?.lastCompletedTask = nil
+        }
+        undoWorkItem = workItem
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: workItem)
+    }
+
+    func undoCompletion(in context: ModelContext) {
+        guard let task = lastCompletedTask else { return }
+        undoWorkItem?.cancel()
+        uncomplete(task, in: context)
+        withAnimation(.springCard) { showUndoBanner = false }
+        lastCompletedTask = nil
     }
 
     func uncomplete(_ task: TendedTask, in context: ModelContext) {
@@ -73,7 +97,7 @@ final class TodayViewModel {
             task.completedAt = nil
         }
         NotificationService.shared.scheduleReminder(for: task)
-        try? context.save()
+        DispatchQueue.main.async { try? context.save() }
     }
 
     func toggleCompletion(_ task: TendedTask, in context: ModelContext, allTasks: [TendedTask]) {
@@ -85,11 +109,36 @@ final class TodayViewModel {
         }
     }
 
+    // MARK: - Birthdays
+
+    func checkBirthdays(pets: [Pet]) {
+        let cal = Calendar.current
+        let now = Date()
+        let todayMonth = cal.component(.month, from: now)
+        let todayDay = cal.component(.day, from: now)
+        birthdayPets = pets.filter { pet in
+            guard let dob = pet.dateOfBirth else { return false }
+            return cal.component(.month, from: dob) == todayMonth &&
+                   cal.component(.day, from: dob) == todayDay
+        }
+        if !birthdayPets.isEmpty {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                withAnimation { self.showConfetti = true }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    withAnimation { self.showConfetti = false }
+                }
+            }
+        }
+    }
+
     // MARK: - Recurrence generation
 
     /// Idempotently generates today's occurrence for each recurring task anchor.
+    /// Skips work when called multiple times on the same calendar day (e.g. repeated foreground events).
     func generateTodayOccurrences(from allTasks: [TendedTask], in context: ModelContext) {
         let today = Calendar.current.startOfDay(for: Date())
+        if let last = lastGeneratedDay, Calendar.current.isDate(last, inSameDayAs: today) { return }
+        lastGeneratedDay = today
         let existingTodayIDs = Set(allTasks.compactMap { task -> UUID? in
             guard let due = task.dueDate, Calendar.current.isDate(due, inSameDayAs: today) else { return nil }
             return task.recurrenceGroupID
@@ -125,6 +174,17 @@ final class TodayViewModel {
             NotificationService.shared.scheduleReminder(for: occurrence)
         }
         try? context.save()
+    }
+
+    // MARK: - Notification rescheduling
+
+    /// Cancel and re-schedule all pending reminders so their trigger times
+    /// reflect the current timezone (important after DST transitions).
+    func rescheduleAllNotifications(from allTasks: [TendedTask]) {
+        for task in allTasks where !task.isCompleted && task.notificationEnabled && task.dueTime != nil {
+            NotificationService.shared.cancelReminder(for: task)
+            NotificationService.shared.scheduleReminder(for: task)
+        }
     }
 
     // MARK: - Delete

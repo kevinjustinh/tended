@@ -8,7 +8,7 @@ final class PersistenceController {
     let container: ModelContainer
 
     static var schema: Schema {
-        Schema([Pet.self, TendedTask.self])
+        Schema([Pet.self, TendedTask.self, PackingItem.self])
     }
 
     private init() {

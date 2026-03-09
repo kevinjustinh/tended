@@ -49,13 +49,13 @@ enum TaskCategory: String, Codable, CaseIterable, Identifiable {
 
     var accentColor: Color {
         switch self {
-        case .feeding:    return Color(hex: "#B8843A")
-        case .water:      return Color(hex: "#4A8FA8")
-        case .medication: return Color(hex: "#A85A4A")
-        case .exercise:   return Color(hex: "#4A7A4A")
-        case .grooming:   return Color(hex: "#7A6A4A")
-        case .vet:        return Color(hex: "#6A5A8A")
-        case .custom:     return Color.warmTan
+        case .feeding:    return .feedingAccent
+        case .water:      return .waterAccent
+        case .medication: return .medAccent
+        case .exercise:   return .exerciseAccent
+        case .grooming:   return .groomingAccent
+        case .vet:        return .vetAccent
+        case .custom:     return .warmTan
         }
     }
 }

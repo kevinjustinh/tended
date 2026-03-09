@@ -19,6 +19,14 @@ extension Color {
     static let textPrimary    = Color(hex: "#2C2416")  // Body text
     static let textSecondary  = Color(hex: "#7A6A52")  // Secondary labels
 
+    // Category accent colors (computed once as static constants)
+    static let feedingAccent  = Color(hex: "#B8843A")
+    static let waterAccent    = Color(hex: "#4A8FA8")
+    static let medAccent      = Color(hex: "#A85A4A")
+    static let exerciseAccent = Color(hex: "#4A7A4A")
+    static let groomingAccent = Color(hex: "#7A6A4A")
+    static let vetAccent      = Color(hex: "#6A5A8A")
+
     // Category card fills
     static let feedingCard   = Color(hex: "#E8C9A0")
     static let medCard       = Color(hex: "#E8C4B8")
@@ -114,21 +122,13 @@ enum HapticStyle {
     func trigger() {
         switch self {
         case .taskComplete:
-            let g = UIImpactFeedbackGenerator(style: .medium)
-            g.prepare()
-            g.impactOccurred()
+            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
         case .overdueAlert:
-            let g = UIImpactFeedbackGenerator(style: .light)
-            g.prepare()
-            g.impactOccurred()
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
         case .delete:
-            let g = UIImpactFeedbackGenerator(style: .rigid)
-            g.prepare()
-            g.impactOccurred()
+            UIImpactFeedbackGenerator(style: .rigid).impactOccurred()
         case .navigation:
-            let g = UISelectionFeedbackGenerator()
-            g.prepare()
-            g.selectionChanged()
+            UISelectionFeedbackGenerator().selectionChanged()
         }
     }
 }
