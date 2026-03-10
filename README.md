@@ -89,7 +89,7 @@ Tended draws visual inspiration from award-winning apps including **Art of Fauna
 
 ## License
 
-Copyright (c) 2026 Kevin Justinh. All Rights Reserved.
+Copyright (c) 2026 Kevin Hernandez. All Rights Reserved.
 
 No part of this repository may be copied, modified, distributed, or used in any form without explicit written permission from the author.
 
