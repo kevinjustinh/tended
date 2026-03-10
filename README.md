@@ -95,4 +95,4 @@ No part of this repository may be copied, modified, distributed, or used in any 
 
 ---
 
-*Designed & built by Kevin Justinh*
+*Designed & built by Kevin Hernandez*
